@@ -1,0 +1,7 @@
+streamlit
+torch
+timm
+transformers
+Pillow
+requests
+plotly
