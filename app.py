@@ -1210,3 +1210,45 @@ Smart Plant Care and Garden Management System<br>
 <small>AI predictions are estimates. Verify important plant health decisions with a qualified agricultural expert.</small>
 </div>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+.creator-footer {
+    margin-top: 60px;
+    padding: 30px 15px;
+    text-align: center;
+    background: linear-gradient(135deg, #102b22, #174d36);
+    border-radius: 18px;
+    border: 1px solid #28764f;
+}
+.creator-footer .brand {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+.creator-footer .tagline {
+    color: #a7c9b5;
+    font-size: 13px;
+}
+.creator-footer .credit {
+    color: #b7d5c3;
+    margin-top: 18px;
+    font-size: 13px;
+}
+.creator-footer .name {
+    color: #6ee7a0;
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    margin-top: 5px;
+}
+</style>
+
+<div class="creator-footer">
+    <div class="brand">🌱 PLANT GUARDIAN AI</div>
+    <div class="tagline">Growing a Greener Tomorrow</div>
+    <div class="credit">Designed & Developed by</div>
+    <div class="name">G. SUJAN</div>
+    <div class="tagline">© 2026 · All Rights Reserved</div>
+</div>
+""", unsafe_allow_html=True)
