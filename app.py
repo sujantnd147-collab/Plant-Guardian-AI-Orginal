@@ -1,48 +1,8 @@
 import streamlit as st
 
-def google_vision_search(pil_image):
-    api_key = st.secrets.get("GOOGLE_VISION_API_KEY")
+et("message", "Vision API error")
 
-    if not api_key:
-        return None, "Google Vision API key not configured."
-
-    try:
-        image_buffer = io.BytesIO()
-        pil_image.convert("RGB").save(image_buffer, format="JPEG")
-        image_content = base64.b64encode(
-            image_buffer.getvalue()
-        ).decode("utf-8")
-
-        url = "https://vision.googleapis.com/v1/images:annotate"
-
-        payload = {
-            "requests": [{
-                "image": {"content": image_content},
-                "features": [
-                    {"type": "WEB_DETECTION", "maxResults": 10},
-                    {"type": "LABEL_DETECTION", "maxResults": 10}
-                ]
-            }]
-        }
-
-        response = requests.post(
-            url,
-            params={"key": api_key},
-            json=payload,
-            timeout=30
-        )
-        response.raise_for_status()
-
-        result = response.json()["responses"][0]
-
-        if "error" in result:
-            return None, result["error"].get("message", "Vision API error")
-
-        return result, None
-
-    except Exception as e:
-        return None, str(e)
-
+        
 import streamlit.components.v1 as components
 import sqlite3, hashlib, secrets, hmac, io, json, urllib.parse, base64, os
 from datetime import datetime, date, timedelta
@@ -273,11 +233,17 @@ def google_search_url(query):
 def get_vision_api_key():
     """Read the Cloud Vision key from Streamlit secrets or an environment variable."""
     try:
-        key = st.secrets.get("GOOGLE_CLOUD_VISION_API_KEY", "")
+        key = (
+            st.secrets.get("GOOGLE_VISION_API_KEY", "")
+            or st.secrets.get("GOOGLE_CLOUD_VISION_API_KEY", "")
+        )
     except Exception:
         key = ""
-    return key or os.environ.get("GOOGLE_CLOUD_VISION_API_KEY", "")
-
+    return (
+        key
+        or os.environ.get("GOOGLE_VISION_API_KEY", "")
+        or os.environ.get("GOOGLE_CLOUD_VISION_API_KEY", "")
+    )
 def google_vision_web_detection(im):
     """Use Google Cloud Vision Web Detection for visual matches and related pages."""
     api_key = get_vision_api_key()
@@ -534,49 +500,41 @@ elif page=="AI Plant Identification":
     st.write("Upload a whole-plant photo and/or a leaf photo. The available model is limited to supported crop/leaf classes.")
     full=st.file_uploader("Whole plant photo (optional)",type=["jpg","jpeg","png"],key="id_full")
     leaf=st.file_uploader("Leaf photo (optional)",type=["jpg","jpeg","png"],key="id_leaf")
-    if st.button("Identify plant",type="primary"):
-        chosen=safe_image(full) if full else safe_image(leaf) if leaf else None
-        if chosen is None: st.error("Upload at least one clear plant or leaf photo.")
-        elif not image_looks_like_plant(chosen): st.error("Please upload a plant or leaf photo.")
+        if st.button("Identify plant", type="primary"):
+        chosen = safe_image(full) if full else safe_image(leaf) if leaf else None
+
+        if chosen is None:
+            st.error("Upload at least one clear plant or leaf photo.")
+        elif not image_looks_like_plant(chosen):
+            st.error("Please upload a plant or leaf photo.")
         else:
             with st.spinner("Checking supported plant classes…"):
-                preds,err=plant_id_model(chosen)
-            if err: st.error(err)
+                preds, err = plant_id_model(chosen)
+
+            if err:
+                st.error(err)
             else:
                 st.success("Possible identification")
-                for p in preds: st.write(f"**{p['label']}** — {p['score']*100:.1f}% model score")
+
+                for p in preds:
+                    st.write(f"**{p['label']}** — {p['score']*100:.1f}% model score")
+
                 st.caption("This model is not a universal plant-name database. Use the search links to cross-check.")
-                st.link_button("Search plant name and reference images",google_search_url("identify this plant leaf "+preds[0]["label"]))
-               if st.button("Find matching webpages and similar images", key="vision_plant_search"):
-    with st.spinner("Checking visual matches on the web…"):
-        web_results, web_error = google_vision_search(chosen)
 
-    if web_error:
-        st.warning(web_error)
-    else:
-        web = web_results.get("webDetection", {})
+                st.link_button(
+                    "Search plant name and reference images",
+                    google_search_url("identify this plant leaf " + preds[0]["label"])
+                )
 
-        st.subheader("Google Vision Web Matches")
+                if st.button("Find matching webpages and similar images", key="vision_plant_search"):
+                    with st.spinner("Checking visual matches on the web…"):
+                        web_results, web_error = google_vision_web_detection(chosen)
 
-        entities = web.get("webEntities", [])
-        if entities:
-            st.write("**Possible plant matches:**")
-            for item in entities:
-                if item.get("description"):
-                    st.write(
-                        f"- {item['description']} "
-                        f"({item.get('score', 0)*100:.1f}%)"
-                    )
+                    if web_error:
+                        st.warning(web_error)
+                    else:
+                        show_web_detection_results(web_results)
 
-        pages = web.get("pagesWithMatchingImages", [])
-        if pages:
-            st.write("**Matching webpages:**")
-            for item in pages[:10]:
-                if item.get("url"):
-                    st.markdown(f"- [{item.get('pageTitle', 'Open webpage')}]({item['url']})")
-
-        if not entities and not pages:
-            st.info("No matching webpages found. Try another clear plant photo.")
     st.markdown("### Search plant names")
     query=st.text_input("Search common plant names",placeholder="Example: jasmine, mango, Ocimum tenuiflorum")
     matches=[x for x in COMMON_PLANTS if query.lower() in x.lower()] if query else COMMON_PLANTS
