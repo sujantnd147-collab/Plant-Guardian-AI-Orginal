@@ -673,4 +673,13 @@ elif page=="Plant Health PDF":
             st.success("Report created.")
 
 st.markdown("---")
-st.markdown("<div style='text-align:center;color:#8eb6a0;font-size:12px'>Plant Guardian AI • Botanical Intelligence • Educational plant-care assistant</div>",unsafe_allow_html=True)
+st.markdown("""
+<div style="text-align:center; padding:25px; color:#a4f3ca;">
+    <h3>🌿 Plant Guardian AI</h3>
+    <p>Created by <b>G. Sujan & V. Sharan</b></p>
+    <p>Class 11A</p>
+    <p>Dasar Higher Secondary School</p>
+    <p>Tiruninravur</p>
+    <p style="font-size:11px;">AI-Powered Plant Care Project • 2026</p>
+</div>
+""", unsafe_allow_html=True)
