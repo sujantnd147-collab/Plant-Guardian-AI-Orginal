@@ -1,4 +1,48 @@
 import streamlit as st
+
+def google_vision_search(pil_image):
+    api_key = st.secrets.get("GOOGLE_VISION_API_KEY")
+
+    if not api_key:
+        return None, "Google Vision API key not configured."
+
+    try:
+        image_buffer = io.BytesIO()
+        pil_image.convert("RGB").save(image_buffer, format="JPEG")
+        image_content = base64.b64encode(
+            image_buffer.getvalue()
+        ).decode("utf-8")
+
+        url = "https://vision.googleapis.com/v1/images:annotate"
+
+        payload = {
+            "requests": [{
+                "image": {"content": image_content},
+                "features": [
+                    {"type": "WEB_DETECTION", "maxResults": 10},
+                    {"type": "LABEL_DETECTION", "maxResults": 10}
+                ]
+            }]
+        }
+
+        response = requests.post(
+            url,
+            params={"key": api_key},
+            json=payload,
+            timeout=30
+        )
+        response.raise_for_status()
+
+        result = response.json()["responses"][0]
+
+        if "error" in result:
+            return None, result["error"].get("message", "Vision API error")
+
+        return result, None
+
+    except Exception as e:
+        return None, str(e)
+
 import streamlit.components.v1 as components
 import sqlite3, hashlib, secrets, hmac, io, json, urllib.parse, base64, os
 from datetime import datetime, date, timedelta
