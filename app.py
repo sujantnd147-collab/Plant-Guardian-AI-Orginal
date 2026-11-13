@@ -547,14 +547,36 @@ elif page=="AI Plant Identification":
                 for p in preds: st.write(f"**{p['label']}** — {p['score']*100:.1f}% model score")
                 st.caption("This model is not a universal plant-name database. Use the search links to cross-check.")
                 st.link_button("Search plant name and reference images",google_search_url("identify this plant leaf "+preds[0]["label"]))
-                if st.button("Find matching webpages and similar images", key="vision_plant_search"):
-                    with st.spinner("Checking visual matches on the web…"):
-                        web_results, web_error = google_vision_web_detection(chosen)
-                    if web_error:
-                        st.warning(web_error)
-                        st.caption("After creating your Cloud Vision API key, add it to Streamlit Secrets as GOOGLE_CLOUD_VISION_API_KEY.")
-                    else:
-                        show_web_detection_results(web_results)
+               if st.button("Find matching webpages and similar images", key="vision_plant_search"):
+    with st.spinner("Checking visual matches on the web…"):
+        web_results, web_error = google_vision_search(chosen)
+
+    if web_error:
+        st.warning(web_error)
+    else:
+        web = web_results.get("webDetection", {})
+
+        st.subheader("Google Vision Web Matches")
+
+        entities = web.get("webEntities", [])
+        if entities:
+            st.write("**Possible plant matches:**")
+            for item in entities:
+                if item.get("description"):
+                    st.write(
+                        f"- {item['description']} "
+                        f"({item.get('score', 0)*100:.1f}%)"
+                    )
+
+        pages = web.get("pagesWithMatchingImages", [])
+        if pages:
+            st.write("**Matching webpages:**")
+            for item in pages[:10]:
+                if item.get("url"):
+                    st.markdown(f"- [{item.get('pageTitle', 'Open webpage')}]({item['url']})")
+
+        if not entities and not pages:
+            st.info("No matching webpages found. Try another clear plant photo.")
     st.markdown("### Search plant names")
     query=st.text_input("Search common plant names",placeholder="Example: jasmine, mango, Ocimum tenuiflorum")
     matches=[x for x in COMMON_PLANTS if query.lower() in x.lower()] if query else COMMON_PLANTS
